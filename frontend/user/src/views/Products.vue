@@ -207,6 +207,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.products-page :deep(.group > div:nth-child(2) > div:first-child),
+.products-page :deep(.group > div:nth-child(2) .price-label) {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .products-page :deep(.group) {
     flex-direction: row;
@@ -244,10 +249,6 @@ onUnmounted(() => {
   .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
     align-items: flex-end;
     white-space: nowrap;
-  }
-  .products-page :deep(.group > div:nth-child(2) > div:first-child),
-  .products-page :deep(.group > div:nth-child(2) .price-label) {
-    display: none;
   }
   .products-page :deep(.group > div:nth-child(2) h3) {
     font-size: 0.875rem;
