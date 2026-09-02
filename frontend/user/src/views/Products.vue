@@ -27,7 +27,7 @@
         <!-- Main Content - Products Grid -->
         <main class="flex-1">
           <!-- Loading Skeleton -->
-          <div v-if="loading" class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div v-if="loading" class="grid grid-cols-1 gap-3 md:gap-3">
             <div v-for="i in 6" :key="i"
               class="rounded-2xl border bg-card overflow-hidden flex flex-col">
               <div class="h-36 md:h-56 theme-skeleton"></div>
@@ -50,7 +50,7 @@
 
           <!-- Products Grid -->
           <div v-else-if="products.length > 0">
-            <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-3">
               <ProductCard
                 v-for="(product, idx) in products"
                 :key="product.id"
@@ -182,6 +182,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@media (min-width: 768px) {
+  .products-page :deep(.group) {
+    flex-direction: row;
+    min-height: 100px;
+    align-items: stretch;
+  }
+  .products-page :deep(.group > div:first-child) {
+    width: 96px;
+    aspect-ratio: auto;
+    flex: 0 0 96px;
+  }
+  .products-page :deep(.group > div:nth-child(2)) {
+    padding: 0.75rem 1rem;
+    justify-content: center;
+  }
+}
+
 .line-clamp-1 {
   overflow: hidden;
   display: -webkit-box;
