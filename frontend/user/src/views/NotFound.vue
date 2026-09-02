@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Bell, Frown, Home, Info, ShoppingBag } from 'lucide-vue-next'
+import { ArrowLeft, Frown, Home, Info, ShoppingBag } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'

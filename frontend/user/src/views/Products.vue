@@ -1,21 +1,13 @@
 <template>
   <div class="products-page min-h-screen bg-background text-foreground pt-20 pb-16">
     <div class="container mx-auto px-4">
-      <!-- Page Header -->
-      <div class="mb-12 mt-12 text-center">
-        <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-foreground">{{ t('nav.products') }}</h1>
-        <p class="text-muted-foreground max-w-2xl mx-auto text-lg border-b pb-8">
-          {{ t('products.subtitle') }}
-        </p>
-      </div>
-
-      <div class="flex flex-col lg:flex-row gap-8">
+      <div class="flex flex-col lg:flex-row gap-3 pt-8">
         <CategorySidebar
           :categories="categoryGroups"
           :selected-category="selectedCategory"
           :expanded-parent-ids="expandedParentIds"
           :show-drawer="showFilterDrawer"
-          :show-search="true"
+          :show-search="false"
           :compact="true"
           :search-query="searchQuery"
           @select-category="selectCategory"
@@ -27,6 +19,10 @@
 
         <!-- Main Content - Products Grid -->
         <main class="flex-1">
+          <div class="mb-3 flex items-center rounded-xl border bg-card px-4 py-2.5">
+            <Search class="mr-2 h-4 w-4 text-muted-foreground" />
+            <Input v-model="searchQuery" class="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" :placeholder="t('products.searchPlaceholder')" />
+          </div>
           <!-- Loading Skeleton -->
           <div v-if="loading" class="grid grid-cols-1 gap-3 md:gap-3">
             <div v-for="i in 6" :key="i"
@@ -112,6 +108,8 @@ import CategorySidebar from '../components/CategorySidebar.vue'
 import PaginationNav from '../components/PaginationNav.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Search } from 'lucide-vue-next'
 
 const router = useRouter()
 const { t } = useI18n()
