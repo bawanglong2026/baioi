@@ -1,4 +1,4 @@
-# Dujiao-Next User Web
+# Baioi User Web
 
 The customer-facing storefront for browsing products, placing orders, and completing payments.
 

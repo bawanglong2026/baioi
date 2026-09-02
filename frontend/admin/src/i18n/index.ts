@@ -484,10 +484,10 @@ const messages = {
       },
     },
     admin: {
-      brand: 'Dujiao-Next Admin',
+      brand: 'Baioi Admin',
       layout: {
-        controlRoom: 'Dujiao-Next Admin 控制台',
-        workspace: 'Dujiao-Next Admin 后台',
+        controlRoom: 'Baioi Admin 控制台',
+        workspace: 'Baioi Admin 后台',
         navigation: '导航菜单',
         collapseSidebar: '收起侧边栏',
         expandSidebar: '展开侧边栏',
@@ -2991,7 +2991,7 @@ const messages = {
           subtitle: '全局通用配置',
           telegram: 'Telegram 链接',
           telegramPlaceholder: 'https://telegram.me/...',
-          whatsapp: 'WhatsApp 链接',
+          whatsapp: 'X（推特）链接',
           whatsappPlaceholder: 'https://wa.me/...',
         },
         footerLinks: {
@@ -4927,10 +4927,10 @@ const messages = {
       },
     },
     admin: {
-      brand: 'Dujiao-Next Admin',
+      brand: 'Baioi Admin',
       layout: {
-        controlRoom: 'Dujiao-Next Admin 控制台',
-        workspace: 'Dujiao-Next Admin 後台',
+        controlRoom: 'Baioi Admin 控制台',
+        workspace: 'Baioi Admin 後台',
         navigation: '導航選單',
         collapseSidebar: '收起側邊欄',
         expandSidebar: '展開側邊欄',
@@ -7434,7 +7434,7 @@ const messages = {
           subtitle: '全域通用配置',
           telegram: 'Telegram 連結',
           telegramPlaceholder: 'https://telegram.me/...',
-          whatsapp: 'WhatsApp 連結',
+          whatsapp: 'X（推特）連結',
           whatsappPlaceholder: 'https://wa.me/...',
         },
         footerLinks: {
@@ -9370,10 +9370,10 @@ const messages = {
       },
     },
     admin: {
-      brand: 'Dujiao-Next Admin',
+      brand: 'Baioi Admin',
       layout: {
-        controlRoom: 'Dujiao-Next Admin Control Panel',
-        workspace: 'Dujiao-Next Admin Workspace',
+        controlRoom: 'Baioi Admin Control Panel',
+        workspace: 'Baioi Admin Workspace',
         navigation: 'Navigation',
         collapseSidebar: 'Collapse sidebar',
         expandSidebar: 'Expand sidebar',

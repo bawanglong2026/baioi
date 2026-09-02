@@ -18,27 +18,10 @@
         </p>
 
         <div class="mt-8 rounded-2xl border bg-muted/40 p-4 text-left">
-          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">
-            {{ t('notFoundPage.quickLinksTitle') }}
-          </p>
+          <p class="text-xs uppercase tracking-widest text-muted-foreground mb-3">{{ t('notFoundPage.quickLinksTitle') }}</p>
           <div class="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" as-child>
-              <RouterLink to="/products">
-                <ShoppingBag class="opacity-70" />
-                {{ t('nav.products') }}
-              </RouterLink>
-            </Button>
-            <Button variant="secondary" size="sm" as-child>
-              <RouterLink to="/notice">
-                <Bell class="opacity-70" />
-                {{ t('nav.notice') }}
-              </RouterLink>
-            </Button>
-            <Button variant="secondary" size="sm" as-child>
-              <RouterLink to="/blog">
-                <BookOpen class="opacity-70" />
-                {{ t('nav.blog') }}
-              </RouterLink>
+            <Button v-for="item in quickLinks" :key="item.to" variant="secondary" size="sm" as-child>
+              <RouterLink :to="item.to"><component :is="item.icon" class="opacity-70" />{{ t(item.label) }}</RouterLink>
             </Button>
           </div>
         </div>
@@ -67,8 +50,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useNotFound } from '../composables/useNotFound'
+import { computed } from 'vue'
+import { useNavConfig } from '../composables/useNavConfig'
 
 const { t } = useI18n()
 
 const { brandSiteName, goBack } = useNotFound()
+const { builtinNavItems, isListMode } = useNavConfig()
+const quickLinks = computed(() => [
+  ...(!isListMode.value ? [{ to: '/products', icon: ShoppingBag, label: 'nav.products' }] : []),
+  ...builtinNavItems.value.filter((item) => ['notice', 'blog'].includes(item.key)).map((item) => ({ to: item.path, icon: item.icon, label: `nav.${item.key}` })),
+])
 </script>

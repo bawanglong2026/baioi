@@ -5,14 +5,12 @@
     :style="{ transitionDuration: 'var(--ui-duration-normal)' }">
     <div class="container mx-auto px-4 flex items-center justify-between gap-4">
       <!-- Logo -->
-      <router-link to="/" class="theme-wordmark group relative gap-3" :title="brandSiteName">
+      <router-link to="/" class="theme-wordmark group relative" :title="brandSiteName">
         <img
-          v-if="brandLogo"
           :src="brandLogo"
-          :alt="brandSiteName"
-          class="h-8 max-w-[180px] shrink-0 object-contain"
+          alt="Baioi"
+          class="h-7 w-7 shrink-0 object-contain transition-transform group-hover:scale-105"
         />
-        <span class="theme-wordmark-text">{{ brandSiteName }}</span>
       </router-link>
 
       <!-- Desktop Menu -->
@@ -252,12 +250,12 @@ const cartCount = computed(() => cartStore.totalItems)
 
 const brandSiteName = computed(() => {
   const text = String(appStore.config?.brand?.site_name || '').trim()
-  return text !== '' ? text : 'Dujiao-Next'
+  return text !== '' ? text : 'Baioi'
 })
 
 const brandLogo = computed(() => {
   const raw = String(appStore.config?.brand?.site_logo || '').trim()
-  return raw ? getImageUrl(raw) : ''
+  return raw ? getImageUrl(raw) : '/brand-logo.png'
 })
 
 const toggleMobileMenu = () => {

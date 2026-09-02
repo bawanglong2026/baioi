@@ -279,7 +279,7 @@ html[data-telegram-mini-app="true"] body {
   }
 
   .theme-wordmark {
-    @apply inline-flex items-center rounded-xl border px-3.5 sm:px-4;
+    @apply inline-flex items-center rounded-xl border-0 bg-transparent px-0;
     min-height: 2.5rem;
     max-width: min(56vw, 20rem);
     background-color: color-mix(in oklab, var(--ui-bg-elevated) 90%, var(--ui-accent-soft) 10%);
