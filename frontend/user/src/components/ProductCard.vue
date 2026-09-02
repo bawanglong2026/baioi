@@ -1,13 +1,16 @@
 <template>
   <Card
-    class="group relative overflow-hidden flex flex-col h-full rounded-2xl transition-all theme-slide-up"
-    :class="isSoldOut(product)
-      ? 'cursor-default opacity-85 grayscale-[0.25] saturate-50 border-destructive/30'
-      : 'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg'"
+    class="product-card group relative flex flex-col overflow-hidden rounded-2xl transition-all theme-slide-up"
+    :class="[
+      layout === 'card' ? 'h-full' : 'product-card--list',
+      isSoldOut(product)
+        ? 'cursor-default opacity-85 grayscale-[0.25] saturate-50 border-destructive/30'
+        : 'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg',
+    ]"
     :style="{ animationDelay: `${index * animationStep}ms` }"
     @click="$emit('click', product.slug)">
     <!-- Image Area -->
-    <div class="aspect-[4/3] overflow-hidden bg-muted relative shrink-0">
+    <div class="product-card-image relative aspect-[4/3] shrink-0 overflow-hidden bg-muted">
       <div
         class="absolute inset-0 z-10 transition-colors duration-300"
         :class="isSoldOut(product) ? 'bg-black/15' : 'bg-black/15 group-hover:bg-black/5'"
@@ -45,16 +48,33 @@
     </div>
 
     <!-- Content Area -->
-    <div class="p-3 md:p-4 relative z-20 flex flex-col flex-1">
-      <div v-if="product.category?.name" class="text-xs text-muted-foreground uppercase tracking-wider mb-1 md:mb-2 truncate">
-        {{ t('products.categoryLabel') }} · {{ getLocalizedText(product.category.name) }}
-      </div>
-      <h3 class="text-sm md:text-lg font-bold text-foreground mb-1 md:mb-2 transition-colors line-clamp-1">
-        {{ getLocalizedText(product.title) }}
-      </h3>
+    <div class="product-card-body relative z-20 flex flex-1 flex-col p-3 md:p-4">
+      <!-- Title and badges stay together so the compact desktop list is vertically centered. -->
+      <div class="product-card-info flex flex-col justify-center">
+        <div v-if="layout === 'card' && product.category?.name" class="product-card-category-card mb-1 truncate text-xs uppercase tracking-wider text-muted-foreground md:mb-2">
+          {{ t('products.categoryLabel') }} · {{ getLocalizedText(product.category.name) }}
+        </div>
 
-      <!-- Badges -->
-      <div class="mb-2 md:mb-3 flex flex-wrap items-center gap-1 md:gap-2">
+        <div class="product-card-title-row flex min-w-0 items-center gap-1.5">
+          <template v-if="layout === 'list' && product.category?.name">
+            <span class="product-card-category hidden max-w-[80px] flex-shrink-0 truncate text-[11px] uppercase tracking-wider text-muted-foreground md:inline">
+              {{ getLocalizedText(product.category.name) }}
+            </span>
+            <span class="product-card-category-separator hidden flex-shrink-0 text-[11px] text-muted-foreground md:inline">·</span>
+          </template>
+          <h3
+            class="product-card-title min-w-0 flex-1 truncate text-foreground transition-colors"
+            :class="layout === 'list' ? 'text-xs font-semibold sm:text-sm md:text-sm' : 'text-sm font-bold md:text-lg'"
+          >
+            {{ getLocalizedText(product.title) }}
+          </h3>
+        </div>
+
+        <!-- Badges -->
+        <div
+          class="product-card-badges flex flex-wrap items-center gap-1 md:gap-2"
+          :class="layout === 'list' ? 'mb-0' : 'mb-2 md:mb-3'"
+        >
         <!-- Mobile: show only fulfillment type badge -->
         <Badge
           class="md:hidden"
@@ -88,15 +108,16 @@
         <Badge class="hidden md:inline-flex" size="xs" :variant="getStockBadgeVariant(product.stock_status)">
           {{ getStockStatusLabel(product) }}
         </Badge>
+        </div>
+
+        <p :class="layout === 'list' ? 'hidden' : 'hidden md:mb-6 md:block'" class="product-card-description text-sm text-muted-foreground line-clamp-2">
+          {{ getLocalizedText(product.description) }}
+        </p>
       </div>
 
-      <p class="hidden md:block text-muted-foreground text-sm mb-6 line-clamp-2">
-        {{ getLocalizedText(product.description) }}
-      </p>
-
-      <div class="flex items-center justify-between border-t pt-2 md:pt-4 mt-auto">
-        <div class="flex flex-col">
-          <span class="price-label hidden md:block text-xs text-muted-foreground uppercase tracking-wider">{{ t('products.price') }}</span>
+      <div class="product-card-price-row mt-auto flex items-center justify-between border-t pt-2 md:pt-4">
+        <div class="product-card-price flex flex-col">
+          <span class="price-label hidden text-xs uppercase tracking-wider text-muted-foreground md:block">{{ t('products.price') }}</span>
           <span
             v-if="hasPromotionPrice(product)"
             class="theme-price-sm theme-price-promotion"
@@ -132,13 +153,13 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="product-card-actions flex items-center gap-2">
           <!-- Quick buy cart button -->
           <Button
             type="button"
             variant="outline"
             size="icon"
-            class="w-8 h-8 md:w-9 md:h-9"
+            class="h-8 w-8 md:h-9 md:w-9"
             :aria-label="t('products.quickBuyAria')"
             :disabled="isSoldOut(product)"
             @click.stop="$emit('quickBuy', product)"
@@ -176,10 +197,12 @@ const props = withDefaults(defineProps<{
   index?: number
   maxTags?: number
   animationStep?: number
+  layout?: 'card' | 'list'
 }>(), {
   index: 0,
   maxTags: 2,
   animationStep: 50,
+  layout: 'card',
 })
 
 defineEmits<{
@@ -190,6 +213,7 @@ defineEmits<{
 const { t } = useI18n()
 const { getLocalizedText, siteCurrency, formatPrice } = useLocalized()
 const { getPurchaseTypeLabel, getFulfillmentTypeLabel, getStockBadgeVariant, getStockStatusLabel, isSoldOut, hasPromotionPrice, getPromotionPriceAmount, hasPromotionRules, hasWholesalePrices } = useProductLabels()
+const layout = computed(() => props.layout)
 
 const imageErrored = ref(false)
 const attemptIdx = ref(0)
@@ -221,3 +245,83 @@ const handleImageError = () => {
   }
 }
 </script>
+
+<style scoped>
+/* The products view uses the compact, single-row storefront treatment. */
+@media (min-width: 768px) {
+  .product-card--list {
+    flex-direction: row;
+    align-items: center;
+    height: 86px;
+    min-height: 86px;
+    border-radius: 0.75rem;
+  }
+
+  .product-card--list .product-card-image {
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
+    margin: 10px;
+    aspect-ratio: auto;
+    border-radius: 0.5rem;
+  }
+
+  .product-card--list .product-card-body {
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 4px 8px 0;
+  }
+
+  .product-card--list .product-card-info {
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .product-card--list .product-card-title-row {
+    gap: 6px;
+  }
+
+  .product-card--list .product-card-badges {
+    gap: 4px;
+  }
+
+  .product-card--list .product-card-description,
+  .product-card--list .price-label {
+    display: none;
+  }
+
+  .product-card--list .product-card-price-row {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 0;
+    padding: 0 16px 0 0;
+    border-top: 0;
+  }
+
+  .product-card--list .product-card-price {
+    align-items: flex-end;
+    white-space: nowrap;
+  }
+
+  .product-card--list .theme-price-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .product-card--list .product-card-actions {
+    gap: 12px;
+  }
+
+  .product-card--list .product-card-actions > button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+  }
+}
+</style>

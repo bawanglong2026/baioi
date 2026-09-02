@@ -60,6 +60,7 @@
                   :key="product.id"
                   :product="product"
                   :index="idx"
+                  layout="list"
                   :max-tags="isMobileGrid ? 1 : 2"
                   :animation-step="30"
                   @click="goToProduct"
@@ -205,77 +206,3 @@ onUnmounted(() => {
   cleanup()
 })
 </script>
-
-<style scoped>
-.products-page :deep(.group > div:nth-child(2) > div:first-child),
-.products-page :deep(.group > div:nth-child(2) .price-label) {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .products-page :deep(.group) {
-    flex-direction: row;
-    height: 86px;
-    min-height: 86px;
-    align-items: stretch;
-    border-radius: 0.75rem;
-  }
-  .products-page :deep(.group > div:first-child) {
-    width: 64px;
-    height: 64px;
-    aspect-ratio: auto;
-    flex: 0 0 64px;
-    align-self: center;
-    margin-left: 0.75rem;
-    border-radius: 0.5rem;
-  }
-  .products-page :deep(.group > div:nth-child(2)) {
-    padding: 0.5rem 0.75rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    column-gap: 0.75rem;
-    align-items: center;
-    min-width: 0;
-  }
-  .products-page :deep(.group > div:nth-child(2) > div:last-child) {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    margin-top: 0;
-    min-width: 160px;
-    padding-left: 0.75rem;
-    padding-top: 0;
-    border-top-width: 0;
-    justify-content: flex-end;
-    gap: 1rem;
-  }
-  .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
-    align-items: flex-end;
-    white-space: nowrap;
-  }
-  .products-page :deep(.group > div:nth-child(2) h3) {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    margin-bottom: 0.25rem;
-  }
-  .products-page :deep(.group > div:nth-child(2) .theme-price-sm) {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-.line-clamp-1 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  line-clamp: 1;
-}
-.line-clamp-2 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-}
-</style>
