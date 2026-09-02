@@ -215,11 +215,15 @@ onUnmounted(() => {
   }
   .products-page :deep(.group > div:first-child) {
     width: 96px;
+    height: 96px;
     aspect-ratio: auto;
     flex: 0 0 96px;
+    align-self: center;
+    margin-left: 0.75rem;
+    border-radius: 0.75rem;
   }
   .products-page :deep(.group > div:nth-child(2)) {
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem 0.75rem 0.75rem;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto 1fr;
@@ -237,6 +241,19 @@ onUnmounted(() => {
   .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
     align-items: flex-end;
     white-space: nowrap;
+  }
+  .products-page :deep(.group > div:nth-child(2) > div:first-child),
+  .products-page :deep(.group > div:nth-child(2) .price-label) {
+    display: none;
+  }
+  .products-page :deep(.group > div:nth-child(2) h3) {
+    font-size: 1rem;
+    line-height: 1.35;
+    margin-bottom: 0.35rem;
+  }
+  .products-page :deep(.group > div:nth-child(2) .theme-price-sm) {
+    font-size: 1rem;
+    line-height: 1.25;
   }
 }
 

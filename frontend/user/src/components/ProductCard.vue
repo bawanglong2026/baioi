@@ -96,7 +96,7 @@
 
       <div class="flex items-center justify-between border-t pt-2 md:pt-4 mt-auto">
         <div class="flex flex-col">
-          <span class="hidden md:block text-xs text-muted-foreground uppercase tracking-wider">{{ t('products.price') }}</span>
+          <span class="price-label hidden md:block text-xs text-muted-foreground uppercase tracking-wider">{{ t('products.price') }}</span>
           <span
             v-if="hasPromotionPrice(product)"
             class="theme-price-sm theme-price-promotion"
