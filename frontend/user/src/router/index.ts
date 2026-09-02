@@ -115,7 +115,7 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            component: templateView('Home', homeViewLoader),
+            component: templateView('Products', productsViewLoader),
         },
         {
             path: '/products',
