@@ -54,7 +54,7 @@
                 <h2 class="truncate text-base font-bold leading-5 text-foreground">{{ group.name }}</h2>
                 <span class="text-sm text-muted-foreground">({{ group.products.length }})</span>
               </div>
-              <div class="grid grid-cols-1 gap-2">
+              <div class="grid grid-cols-1 gap-[8px]">
                 <ProductCard
                   v-for="(product, idx) in group.products"
                   :key="product.id"
