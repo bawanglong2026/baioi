@@ -244,7 +244,10 @@ onUnmounted(() => {
     margin-top: 0;
     min-width: 160px;
     padding-left: 0.75rem;
+    padding-top: 0;
+    border-top-width: 0;
     justify-content: flex-end;
+    gap: 1rem;
   }
   .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
     align-items: flex-end;

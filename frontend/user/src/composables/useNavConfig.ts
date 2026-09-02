@@ -1,7 +1,7 @@
 import { computed, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-    Home, LayoutGrid, Newspaper, Bell, Info,
+    Home, Newspaper, Bell, Info,
     Link2, FileText, Globe, Star, Heart, MessageCircle, Gift, Zap, Shield,
     BookOpen, Code, Phone, MapPin, Music, Camera,
 } from 'lucide-vue-next'
@@ -128,9 +128,6 @@ export const useNavConfig = () => {
         const items: NavItem[] = [
             { key: 'home', path: '/', label: t('nav.home'), icon: Home, type: 'route', target: '_self' },
         ]
-        if (!isListMode.value) {
-            items.push({ key: 'products', path: '/products', label: t('nav.products'), icon: LayoutGrid, type: 'route', target: '_self' })
-        }
         items.push(...builtinNavItems.value, ...customNavItems.value)
         return items
     })
