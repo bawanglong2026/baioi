@@ -46,19 +46,27 @@
           </div>
 
           <!-- Products Grid -->
-          <div v-else-if="products.length > 0">
-            <div class="grid grid-cols-1 gap-3">
-              <ProductCard
-                v-for="(product, idx) in products"
-                :key="product.id"
-                :product="product"
-                :index="idx"
-                :max-tags="isMobileGrid ? 1 : 2"
-                :animation-step="50"
-                @click="goToProduct"
-                @quick-buy="openQuickBuy"
-              />
-            </div>
+          <div v-else-if="products.length > 0" class="space-y-6">
+            <section v-for="group in visibleProductGroups" :key="group.key" class="space-y-2">
+              <div class="flex items-center gap-2 px-1">
+                <span class="h-5 w-1 rounded-full bg-primary"></span>
+                <img v-if="group.icon" :src="getImageUrl(group.icon)" :alt="group.name" class="h-5 w-5 rounded object-cover" />
+                <h2 class="truncate text-base font-bold text-foreground">{{ group.name }}</h2>
+                <span class="text-sm text-muted-foreground">({{ group.products.length }})</span>
+              </div>
+              <div class="grid grid-cols-1 gap-2">
+                <ProductCard
+                  v-for="(product, idx) in group.products"
+                  :key="product.id"
+                  :product="product"
+                  :index="idx"
+                  :max-tags="isMobileGrid ? 1 : 2"
+                  :animation-step="30"
+                  @click="goToProduct"
+                  @quick-buy="openQuickBuy"
+                />
+              </div>
+            </section>
 
             <PaginationNav
               :current-page="currentPage"
@@ -102,6 +110,7 @@ import { useI18n } from 'vue-i18n'
 import { useProductList } from '../composables/useProductList'
 import { usePageSeo } from '../composables/usePageSeo'
 import { useLocalized } from '../composables/useProduct'
+import { getImageUrl } from '../utils/image'
 import ProductCard from '../components/ProductCard.vue'
 import ProductQuickBuy from '../components/ProductQuickBuy.vue'
 import CategorySidebar from '../components/CategorySidebar.vue'
@@ -140,6 +149,23 @@ const seoCategoryName = computed(() => {
   if (!selectedCategory.value) return ''
   const cat = categoryMap.value.get(selectedCategory.value)
   return cat ? getLocalizedText(cat.name) : ''
+})
+const visibleProductGroups = computed(() => {
+  const groups = new Map<string, { key: string; name: string; icon?: string; products: any[] }>()
+  products.value.forEach((product) => {
+    const category = product.category
+    const key = String(category?.id ?? 'uncategorized')
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        name: category?.name ? getLocalizedText(category.name) : t('products.allCategories'),
+        icon: category?.icon,
+        products: [],
+      })
+    }
+    groups.get(key)!.products.push(product)
+  })
+  return Array.from(groups.values())
 })
 usePageSeo({
   canonicalPath: () => route.path,
@@ -194,7 +220,23 @@ onUnmounted(() => {
   }
   .products-page :deep(.group > div:nth-child(2)) {
     padding: 0.75rem 1rem;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 1rem;
+    align-items: center;
+  }
+  .products-page :deep(.group > div:nth-child(2) > div:last-child) {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    margin-top: 0;
+    min-width: 176px;
+    padding-left: 1rem;
+    justify-content: flex-end;
+  }
+  .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
+    align-items: flex-end;
+    white-space: nowrap;
   }
 }
 
