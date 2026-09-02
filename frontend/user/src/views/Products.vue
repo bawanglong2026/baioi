@@ -16,6 +16,7 @@
           :expanded-parent-ids="expandedParentIds"
           :show-drawer="showFilterDrawer"
           :show-search="true"
+          :compact="true"
           :search-query="searchQuery"
           @select-category="selectCategory"
           @toggle-parent="toggleParentCategory"
