@@ -19,9 +19,9 @@
 
         <!-- Main Content - Products Grid -->
         <main class="flex-1">
-          <div class="mb-3 flex items-center rounded-xl border bg-card px-4 py-2.5">
-            <Search class="mr-2 h-4 w-4 text-muted-foreground" />
-            <Input v-model="searchQuery" class="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" :placeholder="t('products.searchPlaceholder')" />
+          <div class="mb-3 flex h-10 items-center rounded-xl border bg-card px-3">
+            <Search class="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+            <Input v-model="searchQuery" class="h-10 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" :placeholder="t('products.searchPlaceholder')" />
           </div>
           <!-- Loading Skeleton -->
           <div v-if="loading" class="grid grid-cols-1 gap-3 md:gap-3">
@@ -51,7 +51,7 @@
               <div class="flex items-center gap-2 px-1">
                 <span class="h-5 w-1 rounded-full bg-primary"></span>
                 <img v-if="group.icon" :src="getImageUrl(group.icon)" :alt="group.name" class="h-5 w-5 rounded object-cover" />
-                <h2 class="truncate text-base font-bold text-foreground">{{ group.name }}</h2>
+                <h2 class="truncate text-base font-bold leading-5 text-foreground">{{ group.name }}</h2>
                 <span class="text-sm text-muted-foreground">({{ group.products.length }})</span>
               </div>
               <div class="grid grid-cols-1 gap-2">
@@ -210,32 +210,35 @@ onUnmounted(() => {
 @media (min-width: 768px) {
   .products-page :deep(.group) {
     flex-direction: row;
-    min-height: 100px;
+    height: 86px;
+    min-height: 86px;
     align-items: stretch;
-  }
-  .products-page :deep(.group > div:first-child) {
-    width: 96px;
-    height: 96px;
-    aspect-ratio: auto;
-    flex: 0 0 96px;
-    align-self: center;
-    margin-left: 0.75rem;
     border-radius: 0.75rem;
   }
+  .products-page :deep(.group > div:first-child) {
+    width: 64px;
+    height: 64px;
+    aspect-ratio: auto;
+    flex: 0 0 64px;
+    align-self: center;
+    margin-left: 0.75rem;
+    border-radius: 0.5rem;
+  }
   .products-page :deep(.group > div:nth-child(2)) {
-    padding: 0.75rem 1rem 0.75rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto auto 1fr;
-    column-gap: 1rem;
+    grid-template-rows: auto auto;
+    column-gap: 0.75rem;
     align-items: center;
+    min-width: 0;
   }
   .products-page :deep(.group > div:nth-child(2) > div:last-child) {
     grid-column: 2;
     grid-row: 1 / -1;
     margin-top: 0;
-    min-width: 176px;
-    padding-left: 1rem;
+    min-width: 160px;
+    padding-left: 0.75rem;
     justify-content: flex-end;
   }
   .products-page :deep(.group > div:nth-child(2) > div:last-child > div:first-child) {
@@ -247,13 +250,13 @@ onUnmounted(() => {
     display: none;
   }
   .products-page :deep(.group > div:nth-child(2) h3) {
-    font-size: 1rem;
-    line-height: 1.35;
-    margin-bottom: 0.35rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    margin-bottom: 0.25rem;
   }
   .products-page :deep(.group > div:nth-child(2) .theme-price-sm) {
-    font-size: 1rem;
-    line-height: 1.25;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }
 

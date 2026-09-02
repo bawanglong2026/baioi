@@ -143,7 +143,7 @@
           <button @click="$emit('selectCategory', null)"
             class="w-full text-left rounded-xl transition-all duration-300 border"
             :class="[
-              compact ? 'px-3 py-2.5 text-sm' : 'px-4 py-3',
+              compact ? 'h-[42px] px-3 py-0 text-sm' : 'px-4 py-3',
               selectedCategory === null
                 ? 'bg-primary text-primary-foreground border border-transparent'
                 : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
@@ -157,7 +157,7 @@
               <button @click="$emit('selectCategory', group.id)"
                 class="flex-1 min-w-0 text-left rounded-xl transition-all duration-300 border flex items-center gap-2"
                 :class="[
-                  compact ? 'px-3 py-2.5 text-sm' : 'px-4 py-3',
+                  compact ? 'h-[42px] px-3 py-0 text-sm' : 'px-4 py-3',
                   selectedCategory === group.id
                     ? 'bg-primary text-primary-foreground border border-transparent'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
@@ -191,7 +191,7 @@
                 <button @click="$emit('selectCategory', child.id)"
                   class="w-full text-left rounded-xl transition-all duration-300 border flex items-center gap-2"
                   :class="[
-                    compact ? 'px-3 py-2.5 text-sm' : 'px-4 py-3',
+                    compact ? 'h-[42px] px-3 py-0 text-sm' : 'px-4 py-3',
                     selectedCategory === child.id
                       ? 'bg-primary text-primary-foreground border border-transparent'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'
