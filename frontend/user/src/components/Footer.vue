@@ -67,7 +67,14 @@
       <!-- Copyright -->
       <div
         class="border-t pt-5 flex flex-col gap-3 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
-        <p class="text-center md:text-left">&copy; {{ currentYear }} Baioi {{ t('footer.rights') }}</p>
+        <div class="space-y-2 text-center md:text-left">
+          <p>&copy; {{ currentYear }} Baioi {{ t('footer.rights') }}</p>
+          <p class="flex items-center gap-1.5">
+            <span>Open Source: Baioi</span>
+            <span aria-hidden="true">·</span>
+            <a href="https://github.com/bawanglong2026/baioi" target="_blank" rel="noopener noreferrer" class="hover:text-foreground">https://github.com/bawanglong2026/baioi</a>
+          </p>
+        </div>
         <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:justify-end">
           <router-link to="/privacy" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.privacy') || 'Privacy Policy' }}</router-link>
           <router-link to="/terms" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.terms') || 'Terms of Service' }}</router-link>
