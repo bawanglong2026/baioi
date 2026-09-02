@@ -70,9 +70,9 @@
         <div class="space-y-2 text-center md:text-left">
           <p>&copy; {{ currentYear }} Baioi {{ t('footer.rights') }}</p>
           <p class="flex items-center gap-1.5">
-            <span>Open Source: Baioi</span>
+            <span>Open Source: Dujiao-Next</span>
             <span aria-hidden="true">·</span>
-            <a href="https://github.com/bawanglong2026/baioi" target="_blank" rel="noopener noreferrer" class="hover:text-foreground">https://github.com/bawanglong2026/baioi</a>
+            <a href="https://github.com/dujiao-next/dujiao-next" target="_blank" rel="noopener noreferrer" class="hover:text-foreground">https://github.com/dujiao-next/dujiao-next</a>
           </p>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:justify-end">
