@@ -18,7 +18,7 @@
         <template v-for="item in menuItems" :key="item.key">
           <Button v-if="item.type === 'route'" as-child variant="ghost" size="sm"
             class="gap-1.5 text-muted-foreground whitespace-nowrap shrink-0">
-            <router-link :to="item.path" active-class="!text-primary !bg-primary/10">
+            <router-link :to="item.path" active-class="!text-primary !bg-primary/10" @click="refreshIfCurrent(item.path)">
               <component :is="item.icon" class="w-4 h-4 shrink-0 opacity-70" />
               <span>{{ item.label }}</span>
             </router-link>
@@ -203,6 +203,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { useCartStore } from '../stores/cart'
@@ -223,6 +224,8 @@ const cartStore = useCartStore()
 const userAuthStore = useUserAuthStore()
 const { theme, toggleTheme } = useTheme()
 const { primaryNavItems, secondaryNavItems } = useNavConfig()
+const router = useRouter()
+const route = useRoute()
 
 const showMobileMenu = ref(false)
 const langOpen = ref(false)
@@ -230,6 +233,10 @@ const scrolled = ref(false)
 const cartBounce = ref(false)
 
 const menuItems = primaryNavItems
+
+const refreshIfCurrent = (path: string) => {
+  if (route.path === path) router.go(0)
+}
 
 // Mobile drawer only shows items NOT in the bottom nav (Home, Products, Cart, Me are in bottom nav)
 const mobileDrawerItems = secondaryNavItems
