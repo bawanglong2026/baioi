@@ -99,7 +99,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Home, LayoutGrid, Newspaper, Info } from 'lucide-vue-next'
+import { Home, Newspaper, Info } from 'lucide-vue-next'
 import { useAppStore } from '../stores/app'
 import { getLocalizedText } from '../utils/resellerSiteConfig'
 
@@ -112,16 +112,12 @@ const footerLogo = '/brand-logo.png'
 const footerBrandName = computed(() => locale.value === 'en-US' ? 'Baioi Digital Store' : locale.value === 'zh-TW' ? 'Baioi數字商店' : 'Baioi数字商店')
 const footerDescription = computed(() => locale.value === 'en-US' ? 'Digital goods for your everyday needs, delivered with quality and care.' : locale.value === 'zh-TW' ? '數字世界商品，為您提供優質的產品和服務。' : '数字世界商品，为您提供优质的产品和服务。')
 
-const isListMode = computed(() => config.value?.template_mode === 'list')
 const navConfig = computed(() => config.value?.nav_config as { builtin?: Record<string, boolean> } | undefined)
 
 const quickLinks = computed(() => {
   const items = [
     { path: '/', label: 'nav.home', icon: Home },
   ]
-  if (!isListMode.value) {
-    items.push({ path: '/products', label: 'nav.products', icon: LayoutGrid })
-  }
   const builtin = navConfig.value?.builtin
   if (!builtin || builtin.blog !== false) {
     items.push({ path: '/blog', label: 'nav.blog', icon: Newspaper })
