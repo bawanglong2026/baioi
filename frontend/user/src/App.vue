@@ -11,16 +11,6 @@
       </ErrorBoundary>
     </VaultLayout>
 
-    <AppleLayout v-else-if="isApple && !isResellerConsole">
-      <ErrorBoundary>
-        <RouterView v-slot="{ Component }">
-          <Transition name="page-fade" mode="out-in">
-            <component :is="Component" />
-          </Transition>
-        </RouterView>
-      </ErrorBoundary>
-    </AppleLayout>
-
     <!-- classic 模板 / 分销控制台（保持原有结构不变） -->
     <template v-else>
       <Navbar v-if="!isResellerConsole" />
@@ -60,7 +50,6 @@ import MobileBottomNav from './components/MobileBottomNav.vue'
 
 // vault 外壳按需加载，classic 用户不会拉取其 chunk/样式
 const VaultLayout = defineAsyncComponent(() => import('./templates/vault/layout/VaultLayout.vue'))
-const AppleLayout = defineAsyncComponent(() => import('./templates/apple/layout/AppleLayout.vue'))
 
 // config 由 router.beforeEach 统一加载，无需在此重复调用
 const appStore = useAppStore()
@@ -68,7 +57,6 @@ const route = useRoute()
 const isResellerConsole = computed(() => route.meta.resellerConsole === true)
 // getActiveTemplate 读取 appStore.config（响应式），config 加载后会重新计算
 const isVault = computed(() => getActiveTemplate() === 'vault')
-const isApple = computed(() => getActiveTemplate() === 'apple')
 </script>
 
 <style>
