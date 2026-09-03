@@ -58,12 +58,6 @@
         </div>
 
         <div class="product-card-title-row flex min-w-0 items-center gap-1.5">
-          <template v-if="layout === 'list' && product.category?.name">
-            <span class="product-card-category hidden max-w-[80px] flex-shrink-0 truncate text-[11px] uppercase tracking-wider text-muted-foreground sm:inline">
-              {{ getLocalizedText(product.category.name) }}
-            </span>
-            <span class="product-card-category-separator hidden flex-shrink-0 text-[11px] text-muted-foreground sm:inline">·</span>
-          </template>
           <h3
             class="product-card-title min-w-0 flex-1 truncate text-foreground transition-colors"
             :class="layout === 'list' ? 'text-xs font-semibold sm:text-sm md:text-sm' : 'text-sm font-bold md:text-lg'"
