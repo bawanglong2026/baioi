@@ -27,9 +27,11 @@
         <ImageIcon class="w-8 h-8 md:w-12 md:h-12" :stroke-width="1.5" aria-hidden="true" />
       </div>
 
-      <div v-if="isSoldOut(product)" class="absolute inset-0 z-20 bg-black/45"></div>
+      <div v-if="isSoldOut(product)" class="absolute inset-0 z-20 flex items-center justify-center bg-black/45">
+        <span v-if="layout === 'list'" class="text-[10px] font-bold text-white">{{ t('products.stockStatus.outOfStock') }}</span>
+      </div>
       <Badge
-        v-if="isSoldOut(product)"
+        v-if="isSoldOut(product) && layout === 'card'"
         variant="destructive"
         size="xs"
         class="absolute left-2 top-2 md:left-4 md:top-4 z-30 tracking-wider shadow-sm"
@@ -57,10 +59,10 @@
 
         <div class="product-card-title-row flex min-w-0 items-center gap-1.5">
           <template v-if="layout === 'list' && product.category?.name">
-            <span class="product-card-category hidden max-w-[80px] flex-shrink-0 truncate text-[11px] uppercase tracking-wider text-muted-foreground md:inline">
+            <span class="product-card-category hidden max-w-[80px] flex-shrink-0 truncate text-[11px] uppercase tracking-wider text-muted-foreground sm:inline">
               {{ getLocalizedText(product.category.name) }}
             </span>
-            <span class="product-card-category-separator hidden flex-shrink-0 text-[11px] text-muted-foreground md:inline">·</span>
+            <span class="product-card-category-separator hidden flex-shrink-0 text-[11px] text-muted-foreground sm:inline">·</span>
           </template>
           <h3
             class="product-card-title min-w-0 flex-1 truncate text-foreground transition-colors"
@@ -77,16 +79,19 @@
         >
         <!-- Mobile: show only fulfillment type badge -->
         <Badge
-          class="md:hidden"
+          class="sm:hidden"
           size="xs"
           :variant="product.fulfillment_type === 'auto' ? 'info' : 'neutral'"
         >
           {{ getFulfillmentTypeLabel(product.fulfillment_type) }}
         </Badge>
+        <Badge v-if="layout === 'list' && isSoldOut(product)" class="sm:hidden" size="xs" variant="danger">
+          {{ getStockStatusLabel(product) }}
+        </Badge>
 
         <!-- Desktop: show all badges -->
         <Badge
-          class="hidden md:inline-flex"
+          class="hidden sm:inline-flex"
           size="xs"
           :variant="product.purchase_type === 'guest' ? 'warning' : 'success'"
         >
@@ -96,7 +101,7 @@
         </Badge>
 
         <Badge
-          class="hidden md:inline-flex"
+          class="hidden sm:inline-flex"
           size="xs"
           :variant="product.fulfillment_type === 'auto' ? 'info' : 'neutral'"
         >
@@ -105,7 +110,7 @@
           {{ getFulfillmentTypeLabel(product.fulfillment_type) }}
         </Badge>
 
-        <Badge class="hidden md:inline-flex" size="xs" :variant="getStockBadgeVariant(product.stock_status)">
+        <Badge class="hidden sm:inline-flex" size="xs" :variant="getStockBadgeVariant(product.stock_status)">
           {{ getStockStatusLabel(product) }}
         </Badge>
         </div>
@@ -175,7 +180,7 @@
             <ArrowRight class="w-4 h-4 transition-transform" :class="isSoldOut(product) ? '' : 'group-hover:translate-x-1'" />
           </span>
           <!-- Mobile: arrow only -->
-          <ChevronRight class="md:hidden w-4 h-4 text-muted-foreground" />
+          <ChevronRight v-if="layout === 'card'" class="h-4 w-4 text-muted-foreground md:hidden" />
         </div>
       </div>
     </div>
@@ -247,14 +252,82 @@ const handleImageError = () => {
 </script>
 
 <style scoped>
-/* The products view uses the compact, single-row storefront treatment. */
-@media (min-width: 768px) {
+/* The products view uses the same responsive horizontal structure at every width. */
+.product-card--list {
+  flex-direction: row;
+  align-items: center;
+  min-height: 58px;
+  border-radius: 0.75rem;
+}
+
+.product-card--list .product-card-image {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  margin: 6px;
+  aspect-ratio: auto;
+  border-radius: 0.5rem;
+}
+
+.product-card--list .product-card-body {
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 2px 6px 0;
+}
+
+.product-card--list .product-card-info {
+  min-width: 0;
+  flex: 1 1 0%;
+  justify-content: center;
+  gap: 2px;
+}
+
+.product-card--list .product-card-title-row,
+.product-card--list .product-card-badges {
+  gap: 4px;
+}
+
+.product-card--list .product-card-description,
+.product-card--list .price-label {
+  display: none;
+}
+
+.product-card--list .product-card-price-row {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0 6px 0 0;
+  border-top: 0;
+}
+
+.product-card--list .product-card-price {
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.product-card--list .theme-price-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.product-card--list .product-card-actions {
+  gap: 4px;
+}
+
+.product-card--list .product-card-actions > button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
   .product-card--list {
-    flex-direction: row;
-    align-items: center;
     height: 86px;
     min-height: 86px;
-    border-radius: 0.75rem;
   }
 
   .product-card--list .product-card-image {
