@@ -8,9 +8,9 @@ import { useAppStore } from '../stores/app'
  *   因此可以一页一页地把新设计搬进 vault，旧站全程可用。
  */
 
-export type StorefrontTemplate = 'classic' | 'vault'
+export type StorefrontTemplate = 'classic' | 'vault' | 'apple'
 
-export const STOREFRONT_TEMPLATES: StorefrontTemplate[] = ['classic', 'vault']
+export const STOREFRONT_TEMPLATES: StorefrontTemplate[] = ['classic', 'vault', 'apple']
 export const DEFAULT_TEMPLATE: StorefrontTemplate = 'classic'
 
 const OVERRIDE_KEY = 'dj-storefront-template'
@@ -62,6 +62,7 @@ export const getActiveTemplate = (): StorefrontTemplate => {
 
 // vault 模板页面（按需动态加载）。key 形如 './vault/Home.vue'
 const vaultViews = import.meta.glob('./vault/**/*.vue')
+const appleViews = import.meta.glob('./apple/**/*.vue')
 
 type ViewLoader = () => Promise<unknown>
 
@@ -71,8 +72,13 @@ type ViewLoader = () => Promise<unknown>
  */
 export const templateView = (name: string, classicLoader: ViewLoader): ViewLoader => {
     return () => {
-        if (getActiveTemplate() === 'vault') {
+        const template = getActiveTemplate()
+        if (template === 'vault') {
             const loader = vaultViews[`./vault/${name}.vue`]
+            if (loader) return loader()
+        }
+        if (template === 'apple') {
+            const loader = appleViews[`./apple/${name}.vue`]
             if (loader) return loader()
         }
         return classicLoader()
