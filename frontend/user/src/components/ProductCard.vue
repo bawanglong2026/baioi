@@ -1,11 +1,11 @@
 <template>
   <Card
-    class="product-card group relative flex flex-col overflow-hidden rounded-2xl transition-all theme-slide-up"
+    class="product-card group relative flex flex-col overflow-hidden rounded-xl transition-all theme-slide-up"
     :class="[
       layout === 'card' ? 'h-full' : 'product-card--list',
       isSoldOut(product)
         ? 'cursor-default opacity-85 grayscale-[0.25] saturate-50 border-destructive/30'
-        : 'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg',
+        : 'cursor-pointer hover:border-primary/30 hover:shadow-lg',
     ]"
     :style="{ animationDelay: `${index * animationStep}ms` }"
     @click="$emit('click', product.slug)">

@@ -1,7 +1,7 @@
 <template>
-  <div class="products-page min-h-screen bg-background text-foreground pt-20 pb-16">
+  <div class="products-page min-h-screen bg-background pb-6 pt-24 text-foreground">
     <div class="container mx-auto px-4">
-      <div class="flex flex-col lg:flex-row gap-3 pt-8">
+      <div class="flex flex-col gap-6 lg:flex-row">
         <CategorySidebar
           :categories="categoryGroups"
           :selected-category="selectedCategory"
@@ -18,10 +18,12 @@
         />
 
         <!-- Main Content - Products Grid -->
-        <main class="flex-1">
-          <div class="mb-3 flex h-10 items-center rounded-xl border bg-card px-3">
-            <Search class="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-            <Input v-model="searchQuery" class="h-10 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0" :placeholder="t('products.searchPlaceholder')" />
+        <main class="min-w-0 flex-1">
+          <div class="relative mb-4">
+            <div class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
+              <Search class="h-4 w-4 text-muted-foreground" />
+            </div>
+            <Input v-model="searchQuery" class="h-10 rounded-xl pl-10 pr-10 shadow-none" :placeholder="t('products.searchPlaceholder')" />
           </div>
           <!-- Loading Skeleton -->
           <div v-if="loading" class="grid grid-cols-1 gap-3 md:gap-3">
@@ -47,14 +49,14 @@
 
           <!-- Products Grid -->
           <div v-else-if="products.length > 0" class="space-y-6">
-            <section v-for="group in visibleProductGroups" :key="group.key" class="space-y-2">
-              <div class="flex items-center gap-2 px-1">
+            <section v-for="group in visibleProductGroups" :key="group.key">
+              <div class="mb-3 flex items-center gap-2 px-0.5">
                 <span class="h-5 w-1 rounded-full bg-primary"></span>
                 <img v-if="group.icon" :src="getImageUrl(group.icon)" :alt="group.name" class="h-5 w-5 rounded object-cover" />
                 <h2 class="truncate text-base font-bold leading-5 text-foreground">{{ group.name }}</h2>
                 <span class="text-sm text-muted-foreground">({{ group.products.length }})</span>
               </div>
-              <div class="grid grid-cols-1 gap-[8px]">
+              <div class="grid grid-cols-1 gap-2">
                 <ProductCard
                   v-for="(product, idx) in group.products"
                   :key="product.id"
