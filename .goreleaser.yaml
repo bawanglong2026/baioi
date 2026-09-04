@@ -98,6 +98,10 @@ release:
   footer: >-
     ---
 
-    ## 📚 Documentation（在线文档）
-    - [Installation Guide](https://dujiao-next.com/deploy/)
-    - [部署指南](https://dujiao-next.com/deploy/)
+    ## 一键安装（Ubuntu 22.04+ / Debian 12+）
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/bawanglong2026/baioi/custom/scripts/dujiao-next-manager.sh -o /tmp/dujiao-next-manager.sh
+    sudo bash /tmp/dujiao-next-manager.sh install
+    ```
+
+    安装器会自动校验本 Release 的 SHA-256，并配置 systemd、Redis、Nginx 与 HTTPS。

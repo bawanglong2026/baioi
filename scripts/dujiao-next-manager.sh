@@ -3,10 +3,11 @@
 set -Eeuo pipefail
 umask 077
 
-readonly MANAGER_VERSION="1.0.0"
-readonly GITHUB_REPOSITORY="dujiao-next/dujiao-next"
+readonly MANAGER_VERSION="1.0.0-baioi.1"
+readonly GITHUB_REPOSITORY="bawanglong2026/baioi"
+readonly GITHUB_BRANCH="custom"
 readonly GITHUB_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
-readonly MANAGER_SOURCE_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/scripts/dujiao-next-manager.sh"
+readonly MANAGER_SOURCE_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_BRANCH}/scripts/dujiao-next-manager.sh"
 readonly SERVICE_USER="dujiao"
 readonly SERVICE_GROUP="dujiao"
 readonly APP_SERVICE="dujiao-next.service"
@@ -323,7 +324,7 @@ archive_name_for() {
 
 validate_download_url() {
   local url=$1
-  [[ "$url" =~ ^https://github\.com/dujiao-next/dujiao-next/releases/download/[^/]+/[^/?#]+$ ]]
+  [[ "$url" =~ ^https://github\.com/bawanglong2026/baioi/releases/download/[^/]+/[^/?#]+$ ]]
 }
 
 validate_effective_download_url() {
