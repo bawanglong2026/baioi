@@ -40,8 +40,9 @@ NGINX_TRANSITION_AVAILABLE="$(root_path /etc/nginx/sites-available/dujiao-next-t
 NGINX_TRANSITION_ENABLED="$(root_path /etc/nginx/sites-enabled/dujiao-next-transition.conf)"
 ACME_ROOT="$(root_path /var/www/dujiao-next-acme)"
 CERTBOT_DEPLOY_HOOK="$(root_path /etc/letsencrypt/renewal-hooks/deploy/dujiao-next-nginx)"
-MANAGER_BIN="$(root_path /usr/local/sbin/dujiao-next-manager)"
-LOCK_FILE="$(root_path /run/dujiao-next-manager.lock)"
+MANAGER_BIN="$(root_path /usr/local/sbin/baioi-manager)"
+LEGACY_MANAGER_BIN="$(root_path /usr/local/sbin/dujiao-next-manager)"
+LOCK_FILE="$(root_path /run/baioi-manager.lock)"
 
 RUN_TMP=""
 
@@ -76,14 +77,14 @@ on_error() {
 }
 
 init_runtime() {
-  [[ -n "$RUN_TMP" ]] || RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/dujiao-next-manager.XXXXXX")"
+  [[ -n "$RUN_TMP" ]] || RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/baioi-manager.XXXXXX")"
   trap cleanup EXIT
   trap 'on_error $LINENO' ERR
 }
 
 require_root() {
   if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
-    die "请使用 root 运行，例如：sudo dujiao-next-manager"
+    die "请使用 root 运行，例如：sudo baioi-manager"
   fi
 }
 
@@ -826,7 +827,8 @@ check_unmanaged_conflicts() {
     "$NGINX_TRANSITION_ENABLED" \
     "$ACME_ROOT" \
     "$CERTBOT_DEPLOY_HOOK" \
-    "$MANAGER_BIN"; do
+    "$MANAGER_BIN" \
+    "$LEGACY_MANAGER_BIN"; do
     [[ ! -e "$path" ]] || die "检测到非本安装器管理的路径：${path}；不会自动接管，请先按迁移文档处理。"
   done
   if getent passwd "$SERVICE_USER" >/dev/null 2>&1; then
@@ -866,6 +868,11 @@ install_manager_copy() {
     curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
       --connect-timeout 10 --max-time 60 "$MANAGER_SOURCE_URL" -o "${RUN_TMP}/manager"
     install -o root -g root -m 0755 "${RUN_TMP}/manager" "$MANAGER_BIN"
+  fi
+  # A managed installation may have been created before the command was renamed.
+  # Install the new entrypoint first, then remove only the exact legacy path.
+  if [[ "$LEGACY_MANAGER_BIN" != "$MANAGER_BIN" && -e "$LEGACY_MANAGER_BIN" ]]; then
+    rm -f -- "$LEGACY_MANAGER_BIN"
   fi
 }
 
@@ -1012,7 +1019,7 @@ fetch_release() {
 render_acme_site() {
   local domain=$1
   cat <<EOF
-# Managed by dujiao-next-manager. Do not edit by hand.
+# Managed by baioi-manager. Do not edit by hand.
 server {
     listen 80;
     listen [::]:80;
@@ -1043,7 +1050,7 @@ write_acme_site() {
 write_transition_acme_site() {
   local domain=$1
   cat <<EOF | atomic_install_text "$NGINX_TRANSITION_AVAILABLE" 0644 root root
-# Temporary ACME site managed by dujiao-next-manager.
+# Temporary ACME site managed by baioi-manager.
 server {
     listen 80;
     listen [::]:80;
@@ -1079,7 +1086,7 @@ render_final_nginx_site() {
   local live_dir
   live_dir="$(root_path "/etc/letsencrypt/live/${cert_name}")"
   cat <<EOF
-# Managed by dujiao-next-manager. Do not edit by hand.
+# Managed by baioi-manager. Do not edit by hand.
 server {
     listen 80;
     listen [::]:80;
@@ -1580,7 +1587,7 @@ run_install() {
   if [[ "$(config_read email.enabled 2>/dev/null || printf 'false')" != "true" ]]; then
     smtp_note=$'\n\n注意：SMTP 尚未启用。请登录后台完成 SMTP 配置后再开放邮箱验证码注册。'
   fi
-  ui_message "安装成功" "商城：https://${DOMAIN}\n后台：https://${DOMAIN}${ADMIN_PATH}/\n管理命令：sudo dujiao-next-manager${smtp_note}"
+  ui_message "安装成功" "商城：https://${DOMAIN}\n后台：https://${DOMAIN}${ADMIN_PATH}/\n管理命令：sudo baioi-manager${smtp_note}"
 }
 
 require_installed_state() {
@@ -1877,7 +1884,7 @@ uninstall_managed() {
   else
     log_info "恢复备份保留在：$backup"
   fi
-  rm -f -- "$MANAGER_BIN"
+  rm -f -- "$MANAGER_BIN" "$LEGACY_MANAGER_BIN"
   ui_message "卸载完成" "Dujiao-Next 已卸载。\n恢复备份：$([[ "$destroy" == "true" ]] && printf '已销毁' || printf '%s' "$backup")"
 }
 
@@ -1932,17 +1939,17 @@ usage() {
 Dujiao-Next 官方安装与运维管理器
 
 用法：
-  dujiao-next-manager                         打开交互式管理菜单
-  dujiao-next-manager install                 安装或继续中断的安装
-  dujiao-next-manager status                  查看状态
-  dujiao-next-manager logs [app|redis|nginx|certbot]
-  dujiao-next-manager start|stop|restart
-  dujiao-next-manager configure-domain
-  dujiao-next-manager configure-admin-path
-  dujiao-next-manager renew-cert
-  dujiao-next-manager admin-reset-password
-  dujiao-next-manager admin-reset-2fa
-  dujiao-next-manager uninstall
+  baioi-manager                         打开交互式管理菜单
+  baioi-manager install                 安装或继续中断的安装
+  baioi-manager status                  查看状态
+  baioi-manager logs [app|redis|nginx|certbot]
+  baioi-manager start|stop|restart
+  baioi-manager configure-domain
+  baioi-manager configure-admin-path
+  baioi-manager renew-cert
+  baioi-manager admin-reset-password
+  baioi-manager admin-reset-2fa
+  baioi-manager uninstall
 EOF
 }
 
@@ -1965,7 +1972,7 @@ main() {
     admin-reset-2fa) admin_recovery 2fa ;;
     uninstall) uninstall_managed ;;
     -h|--help|help) usage ;;
-    --version) printf 'dujiao-next-manager %s\n' "$MANAGER_VERSION" ;;
+    --version) printf 'baioi-manager %s\n' "$MANAGER_VERSION" ;;
     *) usage; die "未知命令：$command" ;;
   esac
 }

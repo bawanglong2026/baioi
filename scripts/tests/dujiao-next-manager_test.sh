@@ -5,7 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 MANAGER_SCRIPT=$(cd "${SCRIPT_DIR}/.." && pwd)/dujiao-next-manager.sh
 
-TEST_TMP=$(mktemp -d "${TMPDIR:-/tmp}/dujiao-next-manager-test.XXXXXX")
+TEST_TMP=$(mktemp -d "${TMPDIR:-/tmp}/baioi-manager-test.XXXXXX")
 trap 'rm -rf -- "$TEST_TMP"' EXIT
 export DUJIAO_MANAGER_TESTING=1
 export DUJIAO_ROOT_PREFIX="${TEST_TMP}/root"
@@ -141,6 +141,10 @@ assert_failure "rejects incomplete backup destruction phrase" validate_destroy_p
 assert_equal "maps amd64 release architecture" "x86_64" "$(platform_asset_arch amd64)"
 assert_equal "maps aarch64 release architecture" "arm64" "$(platform_asset_arch aarch64)"
 assert_failure "rejects unsupported architecture" platform_asset_arch riscv64
+assert_equal "installs manager under baioi command name" \
+  "${DUJIAO_ROOT_PREFIX}/usr/local/sbin/baioi-manager" "$MANAGER_BIN"
+assert_equal "recognizes the exact legacy manager path" \
+  "${DUJIAO_ROOT_PREFIX}/usr/local/sbin/dujiao-next-manager" "$LEGACY_MANAGER_BIN"
 assert_success "accepts semantic release tag" validate_release_tag "v1.5.0"
 assert_failure "rejects partial release tag" validate_release_tag "v1.5"
 assert_equal "builds exact GoReleaser asset name" \
