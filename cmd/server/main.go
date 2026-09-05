@@ -145,7 +145,7 @@ func main() {
 	}
 
 	// 初始化默认管理员账号
-	if cfg.Server.Mode == "release" && defaultAdminPass == "" {
+	if defaultAdminPass == "" {
 		stdLog.Printf("警告: 未设置 DJ_DEFAULT_ADMIN_PASSWORD 且 bootstrap.default_admin_password 为空，已跳过默认管理员初始化")
 	} else if err := adminapplication.InitDefaultAdmin(adminstore.New(gormdb.DB), defaultAdminUser, defaultAdminPass); err != nil {
 		stdLog.Printf("警告: 初始化默认管理员失败: %v", err)

@@ -1,6 +1,7 @@
 package adminapplication
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/dujiao-next/internal/logger"
@@ -11,7 +12,8 @@ import (
 )
 
 const defaultBootstrapUsername = "admin"
-const defaultBootstrapPassword = "admin123"
+
+var ErrBootstrapPasswordRequired = errors.New("bootstrap administrator password is required")
 
 // InitDefaultAdmin creates the first administrator or repairs the configured
 // bootstrap administrator's super-admin flag when administrators already exist.
@@ -34,8 +36,9 @@ func InitDefaultAdmin(store admincontract.Store, username, password string) erro
 		return nil
 	}
 
+	password = strings.TrimSpace(password)
 	if password == "" {
-		password = defaultBootstrapPassword
+		return ErrBootstrapPasswordRequired
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -45,12 +48,7 @@ func InitDefaultAdmin(store admincontract.Store, username, password string) erro
 	if err := store.Create(admin); err != nil {
 		return err
 	}
-	if password == defaultBootstrapPassword {
-		logger.Warnw("default_admin_created_with_default_password", "username", bootstrapUsername, "password", password)
-		logger.Warnw("default_admin_password_change_required", "username", bootstrapUsername)
-	} else {
-		logger.Warnw("default_admin_created", "username", bootstrapUsername, "password_hidden", true)
-	}
+	logger.Warnw("default_admin_created", "username", bootstrapUsername, "password_hidden", true)
 	return nil
 }
 

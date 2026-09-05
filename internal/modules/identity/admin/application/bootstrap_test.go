@@ -1,11 +1,27 @@
 package adminapplication
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	admindomain "github.com/dujiao-next/internal/modules/identity/admin/domain"
 )
+
+func TestInitDefaultAdminRejectsEmptyBootstrapPassword(t *testing.T) {
+	store := newBootstrapStoreStub()
+	err := InitDefaultAdmin(store, "admin", "")
+	if !errors.Is(err, ErrBootstrapPasswordRequired) {
+		t.Fatalf("InitDefaultAdmin error = %v, want %v", err, ErrBootstrapPasswordRequired)
+	}
+	count, countErr := store.Count()
+	if countErr != nil {
+		t.Fatalf("Count error: %v", countErr)
+	}
+	if count != 0 {
+		t.Fatalf("admin count = %d, want 0", count)
+	}
+}
 
 type bootstrapStoreStub struct {
 	admins map[uint]*admindomain.Admin
