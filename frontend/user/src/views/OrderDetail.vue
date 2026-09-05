@@ -366,7 +366,7 @@
                         <Info class="w-4 h-4" :stroke-width="2" />
                         {{ t('orderDetail.instructionsTitle') }}
                       </div>
-                      <div class="prose prose-sm max-w-none dark:prose-invert text-muted-foreground break-words" v-html="block.html"></div>
+                      <div class="prose prose-sm max-w-none dark:prose-invert text-muted-foreground break-words" v-html="processHtmlForDisplay(block.html)"></div>
                     </div>
                   </div>
                 </div>
@@ -425,7 +425,7 @@
                 <Info class="w-4 h-4" :stroke-width="2" />
                 {{ t('orderDetail.instructionsTitle') }}
               </div>
-              <div class="prose prose-sm max-w-none dark:prose-invert text-muted-foreground break-words" v-html="block.html"></div>
+              <div class="prose prose-sm max-w-none dark:prose-invert text-muted-foreground break-words" v-html="processHtmlForDisplay(block.html)"></div>
             </div>
           </div>
         </div>
@@ -435,6 +435,7 @@
 </template>
 
 <script setup lang="ts">
+import { processHtmlForDisplay } from '../utils/content'
 import { Copy, Check, Download, Info } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { Badge } from '@/components/ui/badge'

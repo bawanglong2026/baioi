@@ -95,7 +95,7 @@ func (s *Service) SaveFileWithMeta(file *multipart.FileHeader, scene string) (*c
 	contentType := http.DetectContentType(buffer)
 	// http.DetectContentType 无法识别 SVG，需根据扩展名和内容特征补充判断
 	if ext == ".svg" && isSVGContent(buffer) {
-		contentType = "image/svg+xml"
+		return nil, newUploadValidationError("SVG 文件不被允许；请转换为 PNG 或 WebP")
 	}
 	if normalizedScene != "telegram" && len(s.policy.AllowedTypes) > 0 {
 		allowed := false
@@ -126,23 +126,6 @@ func (s *Service) SaveFileWithMeta(file *multipart.FileHeader, scene string) (*c
 		}
 		if s.policy.MaxHeight > 0 && height > s.policy.MaxHeight {
 			return nil, newUploadValidationError("图片高度超过限制（最大 %d）", s.policy.MaxHeight)
-		}
-	}
-
-	// SVG 安全检查：禁止嵌入脚本和外部引用
-	if contentType == "image/svg+xml" {
-		if _, err := src.Seek(0, 0); err != nil {
-			return nil, err
-		}
-		svgData, err := io.ReadAll(src)
-		if err != nil {
-			return nil, err
-		}
-		if err := validateSVGSafety(svgData); err != nil {
-			return nil, newUploadValidationError("%s", err.Error())
-		}
-		if _, err := src.Seek(0, 0); err != nil {
-			return nil, err
 		}
 	}
 

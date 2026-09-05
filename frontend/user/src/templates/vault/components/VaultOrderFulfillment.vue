@@ -44,13 +44,14 @@
     <div v-if="fulfillment.status === 'delivered' && instructionBlocks(items).length" class="mt-1.5 grid gap-2.5">
       <div v-for="(block, bi) in instructionBlocks(items)" :key="bi" class="rounded-md border border-primary/20 bg-primary/10 p-3.5">
         <div class="mb-2 flex items-center gap-2 text-[13px] font-bold text-primary"><Info class="h-4 w-4" /> {{ t('orderDetail.instructionsTitle') }}</div>
-        <div class="prose prose-sm max-w-none dark:prose-invert prose-a:text-primary prose-img:rounded-sm" v-html="block.html"></div>
+        <div class="prose prose-sm max-w-none dark:prose-invert prose-a:text-primary prose-img:rounded-sm" v-html="processHtmlForDisplay(block.html)"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { processHtmlForDisplay } from '../../../utils/content'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Copy, Check, Download, Info } from 'lucide-vue-next'

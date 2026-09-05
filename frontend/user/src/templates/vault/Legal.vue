@@ -9,7 +9,7 @@
       <div
         v-if="content"
         class="prose max-w-none dark:prose-invert prose-a:text-primary prose-img:rounded-md"
-        v-html="content"
+        v-html="processHtmlForDisplay(content)"
       ></div>
       <div v-else class="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
         <FileText class="h-10 w-10 opacity-60" />
@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { processHtmlForDisplay } from '../../utils/content'
 import { useI18n } from 'vue-i18n'
 import { FileText, Loader2 } from 'lucide-vue-next'
 import { Card } from '@/components/ui/card'

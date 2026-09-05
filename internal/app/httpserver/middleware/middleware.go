@@ -59,7 +59,7 @@ func CORSMiddleware(cfg config.CORSConfig) gin.HandlerFunc {
 				c.Writer.Header().Add("Vary", "Origin")
 			}
 		}
-		if cfg.AllowCredentials {
+		if cfg.AllowCredentials && allowedOrigin != "" && allowedOrigin != "*" {
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		c.Writer.Header().Set("Access-Control-Allow-Headers", headersHeader)
@@ -83,9 +83,6 @@ func resolveAllowedOrigin(origin string, allowedOrigins []string, allowCredentia
 	}
 	for _, allowed := range allowedOrigins {
 		if allowed == "*" {
-			if allowCredentials && origin != "" {
-				return origin
-			}
 			return "*"
 		}
 	}

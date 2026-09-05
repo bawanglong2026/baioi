@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate } from '@/utils/format'
 import { notifyError } from '@/utils/notify'
 import { ArrowLeft, Loader2, Paperclip } from 'lucide-vue-next'
+import DOMPurify from 'dompurify'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -16,6 +17,11 @@ const broadcastId = computed(() => Number(route.params.id))
 
 const loading = ref(false)
 const broadcast = ref<AdminTelegramBroadcast | null>(null)
+const sanitizedMessageHTML = computed(() => DOMPurify.sanitize(broadcast.value?.message_html || '', {
+  USE_PROFILES: { html: true },
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+  FORBID_ATTR: ['style'],
+}))
 
 const formatRecipientType = (value: string) =>
   value === 'specific' ? t('telegramBot.broadcasts.recipientTypeSpecific') : t('telegramBot.broadcasts.recipientTypeAll')
@@ -146,7 +152,7 @@ onMounted(() => {
         </CardHeader>
         <CardContent>
           <div class="rounded-md border bg-muted/50 p-4">
-            <div class="prose prose-sm max-w-none dark:prose-invert break-words whitespace-pre-wrap" v-html="broadcast.message_html" />
+            <div class="prose prose-sm max-w-none dark:prose-invert break-words whitespace-pre-wrap" v-html="sanitizedMessageHTML" />
           </div>
         </CardContent>
       </Card>
