@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 umask 077
 
-readonly MANAGER_VERSION="1.0.0-baioi.1"
+readonly MANAGER_VERSION="1.0.0-baioi.2"
 readonly GITHUB_REPOSITORY="bawanglong2026/baioi"
 readonly GITHUB_BRANCH="custom"
 readonly GITHUB_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
@@ -45,6 +45,20 @@ LEGACY_MANAGER_BIN="$(root_path /usr/local/sbin/dujiao-next-manager)"
 LOCK_FILE="$(root_path /run/baioi-manager.lock)"
 
 RUN_TMP=""
+RELEASE_TAG=""
+RELEASE_ASSET_NAME=""
+RELEASE_BINARY_PATH=""
+RELEASE_CONFIG_PATH=""
+RELEASE_MANAGER_PATH=""
+
+UPGRADE_BACKUP=""
+UPGRADE_ROLLBACK_BINARY=""
+UPGRADE_TEMP_BINARY=""
+UPGRADE_OLD_UID=""
+UPGRADE_OLD_GID=""
+UPGRADE_OLD_MODE=""
+UPGRADE_REPLACED=false
+UPGRADE_SERVICE_STOPPED=false
 
 log_info() {
   printf '[INFO] %s\n' "$*" >&2
@@ -92,7 +106,7 @@ acquire_lock() {
   mkdir -p -- "$(dirname "$LOCK_FILE")"
   exec 9>"$LOCK_FILE"
   if ! flock -n 9; then
-    die "另一个 Dujiao-Next 管理进程正在运行，请稍后重试。"
+    die "另一个 Baioi 管理进程正在运行，请稍后重试。"
   fi
 }
 
@@ -858,7 +872,7 @@ install_dependencies() {
 }
 
 install_manager_copy() {
-  local source=${BASH_SOURCE[0]:-}
+  local source=${1:-${BASH_SOURCE[0]:-}}
   mkdir -p -- "$(dirname "$MANAGER_BIN")"
   if [[ -n "$source" && -r "$source" && "$source" != "$MANAGER_BIN" ]]; then
     install -o root -g root -m 0755 "$source" "$MANAGER_BIN"
@@ -967,10 +981,12 @@ write_systemd_units() {
   systemctl daemon-reload
 }
 
-fetch_release() {
+prepare_release_payload() {
   local arch
   arch=$(platform_asset_arch "$(uname -m)")
-  local metadata="${RUN_TMP}/release.json"
+  local payload_dir=${1:-"${RUN_TMP}/release"}
+  mkdir -p -- "$payload_dir"
+  local metadata="${payload_dir}/release.json"
   curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --tlsv1.2 \
     --connect-timeout 10 --max-time 60 \
     -H 'Accept: application/vnd.github+json' \
@@ -984,8 +1000,8 @@ fetch_release() {
   archive_url=$(sed -n '3p' <<< "$resolution")
   checksum_url=$(sed -n '4p' <<< "$resolution")
 
-  local archive="${RUN_TMP}/${asset_name}"
-  local checksums="${RUN_TMP}/checksums.txt"
+  local archive="${payload_dir}/${asset_name}"
+  local checksums="${payload_dir}/checksums.txt"
   download_release_asset "$archive_url" "$archive" 600 || die "Release 附件下载失败或最终下载域名不受信任"
   download_release_asset "$checksum_url" "$checksums" 60 || die "Release 校验文件下载失败或最终下载域名不受信任"
 
@@ -994,16 +1010,25 @@ fetch_release() {
   ((size >= MIN_ARCHIVE_BYTES && size <= MAX_ARCHIVE_BYTES)) || die "Release 归档大小异常：${size} bytes"
   verify_release_checksum "$archive" "$checksums" "$asset_name" || die "Release SHA-256 校验失败或 checksums.txt 缺少有效条目"
 
-  tar -tzf "$archive" > "${RUN_TMP}/archive.list"
-  validate_archive_listing < "${RUN_TMP}/archive.list" || die "Release 归档包含不安全路径"
-  tar -tvzf "$archive" > "${RUN_TMP}/archive.verbose"
-  validate_archive_types < "${RUN_TMP}/archive.verbose" || die "Release 归档包含符号链接、硬链接或设备文件"
+  tar -tzf "$archive" > "${payload_dir}/archive.list"
+  validate_archive_listing < "${payload_dir}/archive.list" || die "Release 归档包含不安全路径"
+  tar -tvzf "$archive" > "${payload_dir}/archive.verbose"
+  validate_archive_types < "${payload_dir}/archive.verbose" || die "Release 归档包含符号链接、硬链接或设备文件"
   local binary_member config_member
-  binary_member=$(select_archive_member "${RUN_TMP}/archive.list" dujiao-next) || die "Release 归档缺少唯一的 dujiao-next 二进制"
-  config_member=$(select_archive_member "${RUN_TMP}/archive.list" config.yml.example) || die "Release 归档缺少唯一的 config.yml.example"
-  local extract_dir="${RUN_TMP}/extract"
+  binary_member=$(select_archive_member "${payload_dir}/archive.list" dujiao-next) || die "Release 归档缺少唯一的 dujiao-next 二进制"
+  config_member=$(select_archive_member "${payload_dir}/archive.list" config.yml.example) || die "Release 归档缺少唯一的 config.yml.example"
+  local manager_member=""
+  if manager_member=$(select_archive_member "${payload_dir}/archive.list" dujiao-next-manager.sh); then
+    case "/${manager_member}/" in
+      */scripts/dujiao-next-manager.sh/) ;;
+      *) die "Release 归档中的管理器脚本路径异常" ;;
+    esac
+  fi
+  local extract_dir="${payload_dir}/extract"
   mkdir -p -- "$extract_dir"
-  tar -xzf "$archive" --no-same-owner -C "$extract_dir" -- "$binary_member" "$config_member"
+  local -a extract_members=("$binary_member" "$config_member")
+  [[ -n "$manager_member" ]] && extract_members+=("$manager_member")
+  tar -xzf "$archive" --no-same-owner -C "$extract_dir" -- "${extract_members[@]}"
   local binary_path="${extract_dir}/${binary_member}"
   local config_path="${extract_dir}/${config_member}"
   [[ -f "$binary_path" && ! -L "$binary_path" && -f "$config_path" && ! -L "$config_path" ]] || die "Release 关键文件类型异常"
@@ -1011,9 +1036,26 @@ fetch_release() {
   binary_size=$(stat -c '%s' "$binary_path")
   ((binary_size >= MIN_BINARY_BYTES && binary_size <= MAX_BINARY_BYTES)) || die "Release 二进制大小异常"
 
-  install -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0755 "$binary_path" "$APP_BINARY"
-  install -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0640 "$config_path" "$CONFIG_EXAMPLE"
-  state_set release_version "$tag"
+  RELEASE_MANAGER_PATH=""
+  if [[ -n "$manager_member" ]]; then
+    RELEASE_MANAGER_PATH="${extract_dir}/${manager_member}"
+    [[ -f "$RELEASE_MANAGER_PATH" && ! -L "$RELEASE_MANAGER_PATH" ]] || die "Release 管理器脚本类型异常"
+    local manager_size
+    manager_size=$(stat -c '%s' "$RELEASE_MANAGER_PATH")
+    ((manager_size > 0 && manager_size <= 1048576)) || die "Release 管理器脚本大小异常"
+  fi
+
+  RELEASE_TAG=$tag
+  RELEASE_ASSET_NAME=$asset_name
+  RELEASE_BINARY_PATH=$binary_path
+  RELEASE_CONFIG_PATH=$config_path
+}
+
+fetch_release() {
+  prepare_release_payload "${RUN_TMP}/release"
+  install -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0755 "$RELEASE_BINARY_PATH" "$APP_BINARY"
+  install -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0640 "$RELEASE_CONFIG_PATH" "$CONFIG_EXAMPLE"
+  state_set release_version "$RELEASE_TAG"
 }
 
 render_acme_site() {
@@ -1594,6 +1636,170 @@ require_installed_state() {
   state_exists || die "未找到由本安装器管理的 Dujiao-Next"
 }
 
+create_upgrade_backup() {
+  [[ -f "$APP_BINARY" && ! -L "$APP_BINARY" && -x "$APP_BINARY" ]] || return 1
+  mkdir -p -- "$BACKUP_DIR" || return 1
+  chmod 0700 "$BACKUP_DIR" || return 1
+
+  local stat_line backup rollback
+  stat_line=$(stat -c '%u:%g:%a' "$APP_BINARY") || return 1
+  IFS=: read -r UPGRADE_OLD_UID UPGRADE_OLD_GID UPGRADE_OLD_MODE <<< "$stat_line"
+  [[ -n "$UPGRADE_OLD_UID" && -n "$UPGRADE_OLD_GID" && -n "$UPGRADE_OLD_MODE" ]] || return 1
+
+  backup=$(mktemp "${BACKUP_DIR}/dujiao-next-upgrade.XXXXXX") || return 1
+  if ! install -o root -g root -m 0600 "$APP_BINARY" "$backup"; then
+    rm -f -- "$backup"
+    return 1
+  fi
+  if ! cmp -s -- "$APP_BINARY" "$backup"; then
+    rm -f -- "$backup"
+    return 1
+  fi
+
+  rollback="${RUN_TMP}/upgrade-old-binary"
+  if ! cp -p -- "$APP_BINARY" "$rollback"; then
+    rm -f -- "$backup"
+    return 1
+  fi
+  UPGRADE_BACKUP=$backup
+  UPGRADE_ROLLBACK_BINARY=$rollback
+}
+
+atomic_replace_upgrade_binary() {
+  local source=$1
+  [[ -f "$source" && ! -L "$source" && -x "$source" ]] || return 1
+
+  local temporary
+  temporary=$(mktemp "${INSTALL_DIR}/.baioi-upgrade.XXXXXX") || return 1
+  UPGRADE_TEMP_BINARY=$temporary
+  if ! install -o "$UPGRADE_OLD_UID" -g "$UPGRADE_OLD_GID" -m "$UPGRADE_OLD_MODE" \
+      "$source" "$temporary"; then
+    rm -f -- "$temporary"
+    UPGRADE_TEMP_BINARY=""
+    return 1
+  fi
+  if ! mv -f -- "$temporary" "$APP_BINARY"; then
+    rm -f -- "$temporary"
+    UPGRADE_TEMP_BINARY=""
+    return 1
+  fi
+  UPGRADE_TEMP_BINARY=""
+  UPGRADE_REPLACED=true
+
+  local stat_line
+  stat_line=$(stat -c '%u:%g:%a' "$APP_BINARY") || return 1
+  [[ "$stat_line" == "${UPGRADE_OLD_UID}:${UPGRADE_OLD_GID}:${UPGRADE_OLD_MODE}" ]]
+}
+
+restore_upgrade_binary() {
+  [[ -f "$UPGRADE_ROLLBACK_BINARY" && ! -L "$UPGRADE_ROLLBACK_BINARY" ]] || return 1
+  local temporary
+  temporary=$(mktemp "${INSTALL_DIR}/.baioi-rollback.XXXXXX") || return 1
+  if ! install -o "$UPGRADE_OLD_UID" -g "$UPGRADE_OLD_GID" -m "$UPGRADE_OLD_MODE" \
+      "$UPGRADE_ROLLBACK_BINARY" "$temporary"; then
+    rm -f -- "$temporary"
+    return 1
+  fi
+  if ! mv -f -- "$temporary" "$APP_BINARY"; then
+    rm -f -- "$temporary"
+    return 1
+  fi
+  local stat_line
+  stat_line=$(stat -c '%u:%g:%a' "$APP_BINARY") || return 1
+  [[ "$stat_line" == "${UPGRADE_OLD_UID}:${UPGRADE_OLD_GID}:${UPGRADE_OLD_MODE}" ]]
+}
+
+upgrade_failure() {
+  local reason=$1
+  local rollback_ok=true
+  log_error "系统更新失败：${reason}，正在自动恢复旧版本。"
+
+  if [[ "$UPGRADE_SERVICE_STOPPED" == "true" ]]; then
+    systemctl stop "$APP_SERVICE" >/dev/null 2>&1 || true
+  fi
+  if [[ "$UPGRADE_REPLACED" == "true" ]]; then
+    if ! restore_upgrade_binary; then
+      rollback_ok=false
+    fi
+  fi
+  if [[ "$UPGRADE_SERVICE_STOPPED" == "true" ]]; then
+    if ! systemctl start "$APP_SERVICE" || ! wait_for_local_health "$APP_PORT"; then
+      rollback_ok=false
+    fi
+  fi
+
+  if [[ "$rollback_ok" == "true" ]]; then
+    die "系统更新失败，旧版本已恢复：${reason}"
+  fi
+  die "系统更新失败，自动恢复未完成：${reason}；旧二进制备份保留在 ${UPGRADE_BACKUP}"
+}
+
+upgrade_managed() {
+  require_installed_state
+  resume_values_from_state
+  local phase
+  phase=$(state_get phase) || die "安装状态损坏，无法读取安装阶段"
+  [[ "$phase" == "installed" ]] || die "安装尚未完成，不能执行系统更新；请先运行 baioi-manager install"
+  [[ -f "$APP_BINARY" && ! -L "$APP_BINARY" && -x "$APP_BINARY" ]] || die "未找到受安装器管理的应用二进制：$APP_BINARY"
+
+  local current_version
+  current_version=$(state_get release_version 2>/dev/null || true)
+  prepare_release_payload "${RUN_TMP}/upgrade-release"
+  if [[ -n "$current_version" && "$RELEASE_TAG" == "$current_version" ]]; then
+    install_manager_copy "${RELEASE_MANAGER_PATH:-${BASH_SOURCE[0]:-}}" || log_warn "当前已是最新应用版本，但管理器脚本未能刷新。"
+    ui_message "无需更新" "当前已是最新版本：${RELEASE_TAG}\n管理命令：sudo baioi-manager"
+    return 0
+  fi
+
+  local update_message
+  update_message=$(cat <<EOF
+当前版本：${current_version:-未知}
+目标版本：${RELEASE_TAG}
+
+更新会短暂停止应用服务，数据库、上传文件和现有配置不会被覆盖。
+旧二进制会备份到 ${BACKUP_DIR}，如果健康检查失败将自动回滚。
+是否继续？
+EOF
+)
+  ui_yesno "系统更新" "$update_message" || return 0
+
+  UPGRADE_BACKUP=""
+  UPGRADE_ROLLBACK_BINARY=""
+  UPGRADE_TEMP_BINARY=""
+  UPGRADE_OLD_UID=""
+  UPGRADE_OLD_GID=""
+  UPGRADE_OLD_MODE=""
+  UPGRADE_REPLACED=false
+  UPGRADE_SERVICE_STOPPED=false
+
+  create_upgrade_backup || die "无法备份当前应用二进制，更新已取消"
+  UPGRADE_SERVICE_STOPPED=true
+  if ! systemctl stop "$APP_SERVICE"; then
+    upgrade_failure "停止应用服务失败"
+  fi
+  if ! atomic_replace_upgrade_binary "$RELEASE_BINARY_PATH"; then
+    upgrade_failure "新应用二进制替换失败"
+  fi
+  if ! systemctl start "$APP_SERVICE"; then
+    upgrade_failure "启动新应用服务失败"
+  fi
+  if ! wait_for_local_health "$APP_PORT"; then
+    upgrade_failure "新应用本机健康检查失败"
+  fi
+  if ! state_set release_version "$RELEASE_TAG"; then
+    upgrade_failure "写入新版本安装状态失败"
+  fi
+
+  # When the manager was launched from a downloaded script (for example via
+  # `bash /tmp/baioi-manager.sh upgrade`), install_manager_copy promotes that
+  # exact, already-reviewed script to the managed command path. When it was
+  # launched from the managed path, it safely keeps the current entrypoint.
+  if ! install_manager_copy "${RELEASE_MANAGER_PATH:-${BASH_SOURCE[0]:-}}"; then
+    log_warn "应用已更新，但管理器脚本未能刷新；可重新下载管理器脚本后再运行 upgrade。"
+  fi
+  ui_message "更新成功" "应用已更新到：${RELEASE_TAG}\n旧二进制备份：${UPGRADE_BACKUP}\n管理命令：sudo baioi-manager"
+}
+
 show_status() {
   require_installed_state
   resume_values_from_state
@@ -1898,13 +2104,14 @@ main_menu() {
   while true; do
     local choice
     if ! state_exists; then
-      choice=$(ui_menu "Dujiao-Next 管理器" "未检测到已完成安装" \
+      choice=$(ui_menu "Baioi 管理器" "未检测到已完成安装" \
         install "安装或继续中断的安装" \
         exit "退出") || return 0
     else
-      choice=$(ui_menu "Dujiao-Next 管理器" "请选择操作" \
+      choice=$(ui_menu "Baioi 管理器" "请选择操作" \
         status "查看状态" \
         logs "查看日志" \
+        upgrade "更新系统" \
         start "启动服务" \
         stop "停止服务" \
         restart "重启服务" \
@@ -1921,6 +2128,7 @@ main_menu() {
       install) run_install ;;
       status) show_status ;;
       logs) show_logs ;;
+      upgrade) upgrade_managed ;;
       start|stop|restart) service_action "$choice" ;;
       domain) configure_domain ;;
       admin_path) configure_admin_path ;;
@@ -1936,13 +2144,14 @@ main_menu() {
 
 usage() {
   cat <<'EOF'
-Dujiao-Next 官方安装与运维管理器
+Baioi 安装与运维管理器
 
 用法：
   baioi-manager                         打开交互式管理菜单
   baioi-manager install                 安装或继续中断的安装
   baioi-manager status                  查看状态
   baioi-manager logs [app|redis|nginx|certbot]
+  baioi-manager upgrade                 更新系统
   baioi-manager start|stop|restart
   baioi-manager configure-domain
   baioi-manager configure-admin-path
@@ -1964,6 +2173,7 @@ main() {
     install) run_install ;;
     status) show_status ;;
     logs) show_logs "${2:-}" ;;
+    upgrade) upgrade_managed ;;
     start|stop|restart) service_action "$command" ;;
     configure-domain) configure_domain ;;
     configure-admin-path) configure_admin_path ;;

@@ -145,6 +145,14 @@ assert_equal "installs manager under baioi command name" \
   "${DUJIAO_ROOT_PREFIX}/usr/local/sbin/baioi-manager" "$MANAGER_BIN"
 assert_equal "recognizes the exact legacy manager path" \
   "${DUJIAO_ROOT_PREFIX}/usr/local/sbin/dujiao-next-manager" "$LEGACY_MANAGER_BIN"
+manager_source=$(<"$MANAGER_SCRIPT")
+assert_contains "interactive menu uses Baioi manager brand" "$manager_source" 'ui_menu "Baioi 管理器"'
+assert_not_contains "interactive menu no longer uses legacy manager brand" "$manager_source" 'ui_menu "Dujiao-Next 管理器"'
+assert_contains "help uses Baioi installer brand" "$manager_source" "Baioi 安装与运维管理器"
+assert_not_contains "help no longer uses legacy installer brand" "$manager_source" "Dujiao-Next 官方安装与运维管理器"
+assert_contains "interactive menu exposes system upgrade" "$manager_source" 'upgrade "更新系统"'
+assert_contains "help exposes upgrade command" "$manager_source" "baioi-manager upgrade"
+assert_contains "command dispatcher invokes managed upgrade" "$manager_source" 'upgrade) upgrade_managed ;;'
 assert_success "accepts semantic release tag" validate_release_tag "v1.5.0"
 assert_failure "rejects partial release tag" validate_release_tag "v1.5"
 assert_equal "builds exact GoReleaser asset name" \
