@@ -17,7 +17,7 @@ type packageFileBudget struct {
 // Test-only architecture assertions intentionally share one package so they can
 // reuse AST helpers. Production packages have no file-budget exceptions.
 var packageFileBudgetOverrides = map[string]packageFileBudget{
-	"internal/architecture": {production: 0, total: 51},
+	"internal/architecture": {production: 0, total: 50},
 }
 
 // completedMigrationPaths are deleted compatibility-free entry points. Once a
@@ -486,11 +486,6 @@ var completedMigrationPaths = []string{
 	"internal/dto/cart.go",
 	"internal/transport/http/cart",
 	"internal/wiring/cart",
-	"internal/adgateway",
-	"internal/modules/adproxy/service.go",
-	"internal/modules/adproxy/types.go",
-	"internal/transport/http/adproxy",
-	"internal/wiring/adproxy",
 	"internal/modules/compliance/service.go",
 	"internal/modules/compliance/types.go",
 	"internal/modules/compliance/errors.go",
