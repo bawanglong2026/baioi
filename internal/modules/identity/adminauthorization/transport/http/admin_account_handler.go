@@ -50,6 +50,17 @@ func (h *AdminHandler) CreateAuthzAdmin(c *gin.Context) {
 		return
 	}
 
+	isSuper := req.IsSuper != nil && *req.IsSuper
+	if strings.EqualFold(username, protectedSuperAdminUsername) {
+		// The protected account is always a super administrator. Creating it is
+		// therefore subject to the same privilege boundary as is_super=true.
+		isSuper = true
+	}
+	if isSuper && !ginutil.IsSuperAdmin(c) {
+		ginutil.RespondError(c, response.CodeForbidden, "error.forbidden", nil)
+		return
+	}
+
 	existing, err := h.admins.GetByUsername(username)
 	if err != nil {
 		ginutil.RespondError(c, response.CodeInternal, "error.admin_create_failed", err)
@@ -73,11 +84,6 @@ func (h *AdminHandler) CreateAuthzAdmin(c *gin.Context) {
 	if err != nil {
 		ginutil.RespondError(c, response.CodeInternal, "error.admin_create_failed", err)
 		return
-	}
-
-	isSuper := req.IsSuper != nil && *req.IsSuper
-	if strings.EqualFold(username, protectedSuperAdminUsername) {
-		isSuper = true
 	}
 
 	admin := &admindomain.Admin{
@@ -139,6 +145,12 @@ func (h *AdminHandler) UpdateAuthzAdmin(c *gin.Context) {
 		return
 	}
 
+	operatorIsSuper := ginutil.IsSuperAdmin(c)
+	if req.IsSuper != nil && admin.IsSuper != *req.IsSuper && !operatorIsSuper {
+		ginutil.RespondError(c, response.CodeForbidden, "error.forbidden", nil)
+		return
+	}
+
 	updatedFields := make([]string, 0, 3)
 
 	if req.Username != nil {
@@ -148,6 +160,13 @@ func (h *AdminHandler) UpdateAuthzAdmin(c *gin.Context) {
 			return
 		}
 		if normalizedUsername != admin.Username {
+			if strings.EqualFold(normalizedUsername, protectedSuperAdminUsername) && !admin.IsSuper && !operatorIsSuper {
+				// The protected account is always a super administrator. A regular
+				// system administrator must not be able to create one by renaming a
+				// normal account.
+				ginutil.RespondError(c, response.CodeForbidden, "error.forbidden", nil)
+				return
+			}
 			existing, err := h.admins.GetByUsername(normalizedUsername)
 			if err != nil {
 				ginutil.RespondError(c, response.CodeInternal, "error.admin_update_failed", err)
@@ -166,6 +185,12 @@ func (h *AdminHandler) UpdateAuthzAdmin(c *gin.Context) {
 		nextIsSuper := *req.IsSuper
 		if strings.EqualFold(strings.TrimSpace(admin.Username), protectedSuperAdminUsername) {
 			nextIsSuper = true
+		}
+		if admin.IsSuper != nextIsSuper && !operatorIsSuper {
+			// Keep this check next to the state transition as a defense in depth
+			// guard for future changes to username/protected-account handling.
+			ginutil.RespondError(c, response.CodeForbidden, "error.forbidden", nil)
+			return
 		}
 		if admin.IsSuper != nextIsSuper {
 			admin.IsSuper = nextIsSuper
