@@ -42,7 +42,8 @@ func TestClientSendsSignedCallback(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	client := New()
+	client := NewWithHTTPClient(server.Client())
+	client.validateURL = func(context.Context, string) error { return nil }
 	err := client.Send(context.Background(), downstreamcontract.DeliveryRequest{
 		URL:       server.URL,
 		APIKey:    "downstream-key",
@@ -65,7 +66,9 @@ func TestClientRejectsNonSuccessContract(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	err := New().Send(context.Background(), downstreamcontract.DeliveryRequest{
+	client := NewWithHTTPClient(server.Client())
+	client.validateURL = func(context.Context, string) error { return nil }
+	err := client.Send(context.Background(), downstreamcontract.DeliveryRequest{
 		URL:     server.URL,
 		Payload: downstreamcontract.CallbackPayload{Timestamp: 1_700_000_000},
 	})

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	downstreamcontract "github.com/dujiao-next/internal/modules/downstreamcallback/contract"
+	"github.com/dujiao-next/internal/shared/safeurl"
 	"github.com/dujiao-next/internal/upstream"
 )
 
@@ -18,23 +19,34 @@ const signaturePath = "/api/v1/upstream/callback"
 
 // Client 执行符合上游协议的签名 HTTP 回调。
 type Client struct {
-	httpClient *http.Client
+	httpClient  *http.Client
+	validateURL func(context.Context, string) error
 }
 
 var _ downstreamcontract.Deliverer = (*Client)(nil)
 
 func New() *Client {
-	return NewWithHTTPClient(&http.Client{Timeout: 15 * time.Second})
+	return NewWithHTTPClient(&http.Client{
+		Timeout: 15 * time.Second,
+		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
+			return safeurl.ValidatePublicHTTP(req.Context(), req.URL.String(), nil)
+		},
+	})
 }
 
 func NewWithHTTPClient(client *http.Client) *Client {
 	if client == nil {
 		panic("downstream callback client: http client is nil")
 	}
-	return &Client{httpClient: client}
+	return &Client{httpClient: client, validateURL: func(ctx context.Context, raw string) error {
+		return safeurl.ValidatePublicHTTP(ctx, raw, nil)
+	}}
 }
 
 func (c *Client) Send(ctx context.Context, request downstreamcontract.DeliveryRequest) error {
+	if err := c.validateURL(ctx, request.URL); err != nil {
+		return fmt.Errorf("unsafe callback URL: %w", err)
+	}
 	body, err := json.Marshal(request.Payload)
 	if err != nil {
 		return err

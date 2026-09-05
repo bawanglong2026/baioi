@@ -3,7 +3,6 @@ package upstreamhttp
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -207,16 +206,13 @@ func validateCallbackURL(rawURL string) error {
 	if host == "" {
 		return fmt.Errorf("callback url must have a host")
 	}
-	// 禁止 localhost 和回环地址
-	if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "0.0.0.0" {
+	// Storage-time guard. Delivery resolves the host again and validates every
+	// redirect, closing DNS rebinding and redirect-based SSRF bypasses.
+	if strings.EqualFold(strings.TrimSuffix(host, "."), "localhost") {
 		return fmt.Errorf("callback url must not point to localhost")
 	}
-	// 检查是否是内网 IP
-	ip := net.ParseIP(host)
-	if ip != nil {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-			return fmt.Errorf("callback url must not point to private network")
-		}
+	if parsed.User != nil {
+		return fmt.Errorf("callback url must not contain credentials")
 	}
 	return nil
 }
