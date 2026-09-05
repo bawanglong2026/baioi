@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,9 +17,12 @@ import (
 	siteconnectiondomain "github.com/dujiao-next/internal/modules/siteconnection/domain"
 
 	"github.com/dujiao-next/internal/logger"
+	"github.com/dujiao-next/internal/shared/safeurl"
 
 	"github.com/google/uuid"
 )
+
+const maxUpstreamImageBytes int64 = 10 << 20
 
 // upstreamHTTPError 上游返回非 200 时的结构化错误
 type upstreamHTTPError struct {
@@ -62,6 +66,9 @@ func NewDujiaoNextAdapter(conn *siteconnectiondomain.Connection, uploadsDir stri
 		uploadsDir: uploadsDir,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
+			CheckRedirect: func(req *http.Request, _ []*http.Request) error {
+				return safeurl.ValidatePublicHTTP(req.Context(), req.URL.String(), nil)
+			},
 		},
 	}
 }
@@ -178,6 +185,9 @@ func (a *DujiaoNextAdapter) DownloadImage(ctx context.Context, imageURL string) 
 	if strings.HasPrefix(imageURL, "/") {
 		fullURL = a.baseURL + imageURL
 	}
+	if err := safeurl.ValidatePublicHTTP(ctx, fullURL, nil); err != nil {
+		return "", fmt.Errorf("unsafe image URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, nil)
 	if err != nil {
@@ -193,9 +203,13 @@ func (a *DujiaoNextAdapter) DownloadImage(ctx context.Context, imageURL string) 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("download image: status %d", resp.StatusCode)
 	}
+	if resp.ContentLength > maxUpstreamImageBytes {
+		return "", fmt.Errorf("download image: response exceeds size limit")
+	}
 
 	// 确定文件扩展名
-	ext := filepath.Ext(imageURL)
+	parsedImageURL, _ := url.Parse(fullURL)
+	ext := filepath.Ext(parsedImageURL.Path)
 	if ext == "" || len(ext) > 6 {
 		ext = ".jpg"
 	}
@@ -215,11 +229,25 @@ func (a *DujiaoNextAdapter) DownloadImage(ctx context.Context, imageURL string) 
 	if err != nil {
 		return "", fmt.Errorf("create file: %w", err)
 	}
-	defer f.Close()
+	removePartial := true
+	defer func() {
+		_ = f.Close()
+		if removePartial {
+			_ = os.Remove(filePath)
+		}
+	}()
 
-	if _, err := io.Copy(f, resp.Body); err != nil {
+	written, err := io.Copy(f, io.LimitReader(resp.Body, maxUpstreamImageBytes+1))
+	if err != nil {
 		return "", fmt.Errorf("write file: %w", err)
 	}
+	if written > maxUpstreamImageBytes {
+		return "", fmt.Errorf("download image: response exceeds size limit")
+	}
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("close file: %w", err)
+	}
+	removePartial = false
 
 	// 返回相对路径
 	return "/uploads/upstream/" + filename, nil

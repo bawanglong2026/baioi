@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"time"
 
@@ -49,6 +50,9 @@ func (s *Service) Create(input CreateInput) (*siteconnectiondomain.Connection, e
 		return nil, siteconnectioncontract.ErrInvalid
 	}
 	if strings.TrimSpace(input.ApiKey) == "" || strings.TrimSpace(input.ApiSecret) == "" {
+		return nil, siteconnectioncontract.ErrInvalid
+	}
+	if !validUpstreamBaseURL(input.BaseURL) {
 		return nil, siteconnectioncontract.ErrInvalid
 	}
 
@@ -117,6 +121,9 @@ func (s *Service) Update(id uint, input UpdateInput) (*siteconnectiondomain.Conn
 		conn.Name = strings.TrimSpace(input.Name)
 	}
 	if strings.TrimSpace(input.BaseURL) != "" {
+		if !validUpstreamBaseURL(input.BaseURL) {
+			return nil, siteconnectioncontract.ErrInvalid
+		}
 		conn.BaseURL = strings.TrimRight(strings.TrimSpace(input.BaseURL), "/")
 	}
 	if strings.TrimSpace(input.ApiKey) != "" {
@@ -176,6 +183,12 @@ func (s *Service) Update(id uint, input UpdateInput) (*siteconnectiondomain.Conn
 	}
 
 	return conn, nil
+}
+
+func validUpstreamBaseURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	return err == nil && u.Hostname() != "" && u.User == nil &&
+		(u.Scheme == "http" || u.Scheme == "https") && u.RawQuery == "" && u.Fragment == ""
 }
 
 // Delete 删除连接
